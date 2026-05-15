@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "author": "Mas Obets",
+  "editor": "Bets_scema",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": 220,
+      "left": -100,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-hub75-matrix",
+      "id": "matrix",
+      "top": -134,
+      "left": 230,
+      "attrs": {
+        "chain": "1",
+        "rows": "32",
+        "cols": "64"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "rtc:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "rtc:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "rtc:SDA",
+      "esp:21",
+      "green",
+      []
+    ],
+    [
+      "rtc:SCL",
+      "esp:22",
+      "blue",
+      []
+    ],
+    [
+      "matrix:R1",
+      "esp:25",
+      "red",
+      []
+    ],
+    [
+      "matrix:G1",
+      "esp:26",
+      "green",
+      []
+    ],
+    [
+      "matrix:B1",
+      "esp:27",
+      "blue",
+      []
+    ],
+    [
+      "matrix:R2",
+      "esp:14",
+      "red",
+      []
+    ],
+    [
+      "matrix:G2",
+      "esp:12",
+      "green",
+      []
+    ],
+    [
+      "matrix:B2",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "matrix:A",
+      "esp:23",
+      "white",
+      []
+    ],
+    [
+      "matrix:B",
+      "esp:19",
+      "white",
+      []
+    ],
+    [
+      "matrix:C",
+      "esp:5",
+      "white",
+      []
+    ],
+    [
+      "matrix:D",
+      "esp:17",
+      "white",
+      []
+    ],
+    [
+      "matrix:CLK",
+      "esp:18",
+      "yellow",
+      []
+    ],
+    [
+      "matrix:LATCH",
+      "esp:4",
+      "orange",
+      []
+    ],
+    [
+      "matrix:OE",
+      "esp:16",
+      "gray",
+      []
+    ]
+  ]
+}

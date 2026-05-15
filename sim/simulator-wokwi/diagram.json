@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "author": "ChatGPT",
+  "editor": "wokwi",
+  "parts": [
+
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix",
+      "top": -120,
+      "left": 250,
+      "attrs": {
+        "chain": "4"
+      }
+    },
+
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": 180,
+      "left": -120,
+      "attrs": {}
+    }
+  ],
+
+  "connections": [
+
+    [ "matrix:VCC", "esp:5V", "red", [] ],
+    [ "matrix:GND", "esp:GND.1", "black", [] ],
+
+    [ "matrix:DIN", "esp:23", "green", [] ],
+    [ "matrix:CS", "esp:5", "blue", [] ],
+    [ "matrix:CLK", "esp:18", "yellow", [] ],
+
+    [ "rtc:VCC", "esp:3V3", "red", [] ],
+    [ "rtc:GND", "esp:GND.1", "black", [] ],
+
+    [ "rtc:SDA", "esp:21", "green", [] ],
+    [ "rtc:SCL", "esp:22", "blue", [] ]
+  ]
+}
