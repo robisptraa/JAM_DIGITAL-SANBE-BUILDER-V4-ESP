@@ -12,6 +12,7 @@
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Wire.h>
 #include <RTClib.h>
+#include <HTTPClient.h>
 
 #define PANEL_RES_X 64      
 #define PANEL_RES_Y 32     
@@ -25,6 +26,8 @@
 char ssid[] = ""; 
 char pass[] = ""; 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+const char* apiEndpoint = "";
 
 MatrixPanel_I2S_DMA *dma_display = nullptr;
 
@@ -166,6 +169,89 @@ void updateTime() {
 }
 
 
+// ================= POST API =================
+void postDeviceStatus() {
+
+  if (!isConnected) {
+    Serial.println("[API] No internet connection");
+    return;
+  }
+
+  HTTPClient http;
+
+  String connectionType = isUsingLan ? "lan" : "wifi";
+
+  String ipAddress;
+
+  if (isUsingLan) {
+    ipAddress = Ethernet.localIP().toString();
+  } else {
+    ipAddress = WiFi.localIP().toString();
+  }
+
+  // ===== MAC ADDRESS =====
+  String macAddress;
+
+  if (isUsingLan) {
+    macAddress =
+      String(mac[0], HEX) + ":" +
+      String(mac[1], HEX) + ":" +
+      String(mac[2], HEX) + ":" +
+      String(mac[3], HEX) + ":" +
+      String(mac[4], HEX) + ":" +
+      String(mac[5], HEX);
+
+  } else {
+    macAddress = WiFi.macAddress();
+  }
+
+  macAddress.toUpperCase();
+
+  // ===== UNIQUE DEVICE ID =====
+  String deviceId = "clock-" + macAddress;
+  deviceId.replace(":", "");
+
+  // ===== DATE & TIME =====
+  char clockStr[10];
+  sprintf(clockStr, "%02d:%02d:00", h, m);
+
+  char dateStr[20];
+  sprintf(dateStr, "%04d-%02d-%02d", yr, month + 1, d);
+
+  // ===== JSON =====
+  String jsonPayload = "{";
+  jsonPayload += "\"clock_device_id\":\"" + deviceId + "\",";
+  jsonPayload += "\"actual_clock_device\":\"" + String(clockStr) + "\",";
+  jsonPayload += "\"actual_date_device\":\"" + String(dateStr) + "\",";
+  jsonPayload += "\"conection_clock_device_status\":\"";
+  jsonPayload += (isConnected ? "connect" : "disconnect");
+  jsonPayload += "\",";
+  jsonPayload += "\"connection_type\":\"" + connectionType + "\",";
+  jsonPayload += "\"mac_addres\":\"" + macAddress + "\",";
+  jsonPayload += "\"ip_addres\":\"" + ipAddress + "\"";
+  jsonPayload += "}";
+
+  Serial.println("[API] POST DATA:");
+  Serial.println(jsonPayload);
+
+  http.begin(apiEndpoint);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.POST(jsonPayload);
+
+  Serial.print("[API] Response Code: ");
+  Serial.println(httpResponseCode);
+
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+
+    Serial.println("[API] Response:");
+    Serial.println(response);
+  }
+
+  http.end();
+}
+
 // ================= SETUP =================
 void setup() {
   Serial.begin(115200);
@@ -289,12 +375,20 @@ void loop() {
 
   handleNetworkSwitch();
 
+ static unsigned long lastPost = 0;
+
   if (millis() - lastUpdate >= 1000) {
     lastUpdate = millis();
 
     checkConnection();
     updateTime();
     displaySimpleLayout();
+
+  if (millis() - lastPost >= 10000) {
+  lastPost = millis();
+
+  postDeviceStatus();
+}
   }
 }
 
