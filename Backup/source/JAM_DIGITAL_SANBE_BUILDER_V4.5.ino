@@ -20,8 +20,8 @@
 #define PANEL_CHAIN 1
 
 //WIFI_CONFIG
-char ssid[] = "";
-char pass[] = "";
+char ssid[] = "POCO M5";
+char pass[] = "adielantp";
 
 //API_CONFIG
 const char* apiEndpoint = "";
