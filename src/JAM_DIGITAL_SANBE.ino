@@ -26,7 +26,7 @@
 #define W5500_SCK  32
 #define W5500_MISO 33
 #define W5500_MOSI 25
-#define W5500_CS   0
+#define W5500_CS   23
 
 // WIFI CONNECTION CONFIG 
 char ssid[] = "POCO M5";
@@ -57,7 +57,6 @@ bool isConnected = false;
 bool isUsingLan  = false;
 int  h, m, d, month, yr;
 
-
 // MAC/IP HELPER 
 bool lanLinkON() {
   return Ethernet.linkStatus() == LinkON;
@@ -87,7 +86,6 @@ String getIpString() {
   return WiFi.localIP().toString();
 }
 
-
 void displayLayout() {
   dma_display->fillScreen(myBLACK);
 
@@ -111,8 +109,6 @@ void displayLayout() {
   dma_display->setCursor(x_date, 22);
   dma_display->print(dateStr);
 }
-
-
 
 void checkConnection() {
   bool prevConnected = isConnected;
@@ -158,8 +154,6 @@ void checkConnection() {
     }
   }
 }
-
-═
 
 void updateTime() {
   bool gotInternetTime = false;
@@ -271,8 +265,6 @@ void postDeviceStatus() {
   http.end();
 }
 
-
-
 void printPanelLog() {
   Serial.println("[PANEL] Panel P5 HUB75 Check");
   Serial.printf ("[PANEL] Resolution : %dx%d  chain=%d\n",
@@ -302,9 +294,6 @@ void printPanelLog() {
   dma_display->fillScreen(dma_display->color565(0, 0, 0));
   Serial.println("[PANEL] Panel P5 OK");
 }
-
-
-
 
 void printLanLog() {
   Serial.println("[LAN] W5500 Check");
