@@ -1,6 +1,6 @@
 // ====================
-// JAM_DIGITAL_SANBE_DEV.5.1
-// product_Add_Splash_Welcome-TEXT : PT SANBE Farma
+// JAM_DIGITAL_SANBE_DEV.5.0
+// product_implement_PCB_Baru-implement-w5500
 // author : obets
 // project : jam digital panel p5 pt sanbe 
 // ====================
@@ -84,54 +84,6 @@ String getIpString() {
     return String(ip[0])+"."+String(ip[1])+"."+String(ip[2])+"."+String(ip[3]);
   }
   return WiFi.localIP().toString();
-}
-
-void showSplash() {
-  const char* text    = "PT SANBE FARMA";
-  const int   charW   = 6;   
-  const int   charH   = 8;  
-  const int   textLen = 14;  
-
-  int textW = textLen * charW;                
-  int x     = (PANEL_RES_X - textW) / 2;      
-  int y     = (PANEL_RES_Y - charH) / 2;       
-
-  const int fadeSteps = 32;
-  const int holdMs    = 2000;
-  const int stepDelay = 18;
-
-  auto drawFrame = [&](uint8_t brightness) {
-    dma_display->setBrightness8(brightness);
-    dma_display->fillScreen(myBLACK);
-    dma_display->setFont();
-    dma_display->setTextSize(1);
-    dma_display->setTextColor(myRED);
-    dma_display->setCursor(x, y);
-    dma_display->print(text);
-  };
-
-  Serial.println("[SPLASH] Fade in...");
-  for (int i = 0; i <= fadeSteps; i++) {
-    uint8_t br = (uint8_t)((i * 200) / fadeSteps);
-    drawFrame(br);
-    delay(stepDelay);
-  }
-
- 
-  Serial.println("[SPLASH] Hold...");
-  delay(holdMs);
-
-
-  Serial.println("[SPLASH] Fade out...");
-  for (int i = fadeSteps; i >= 0; i--) {
-    uint8_t br = (uint8_t)((i * 200) / fadeSteps);
-    drawFrame(br);
-    delay(stepDelay);
-  }
-
-  dma_display->setBrightness8(128);
-  dma_display->fillScreen(myBLACK);
-  Serial.println("[SPLASH] Done");
 }
 
 void displayLayout() {
@@ -412,8 +364,6 @@ void setup() {
   myBLACK = dma_display->color565(0,   0,   0);
   myRED   = dma_display->color565(255, 0,   0);
   myGREEN = dma_display->color565(0,   255, 0);
-
-  showSplash();
 
   printPanelLog();
 
