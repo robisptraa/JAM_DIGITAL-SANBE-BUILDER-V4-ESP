@@ -1,6 +1,6 @@
 // ====================
-// JAM_DIGITAL_SANBE_DEV.5.1
-// product_Add_Splash_Welcome-TEXT : PT SANBE Farma
+// JAM_DIGITAL_SANBE_DEV.5.3
+// fixxing conection check, ntp sync 
 // author : obets
 // project : jam digital panel p5 pt sanbe 
 // ====================
@@ -29,8 +29,8 @@
 #define W5500_CS   23
 
 // WIFI CONNECTION CONFIG 
-char ssid[] = "POCO M5";
-char pass[] = "adielantp";
+char ssid[] = "ALKAALDE";
+char pass[] = "Alkaalde111";
 
 //LAN CONNECTION CONFIG 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -49,8 +49,14 @@ bool rtcAvailable = false;
 //NTP CONFIG
 WiFiUDP     ntpUDP_WiFi;
 EthernetUDP ntpUDP_Eth;
-NTPClient timeClientWiFi(ntpUDP_WiFi, "pool.ntp.org", 7 * 3600);
-NTPClient timeClientEth (ntpUDP_Eth,  "pool.ntp.org", 7 * 3600);
+NTPClient timeClientWiFi(ntpUDP_WiFi, "id.pool.ntp.org", 7 * 3600);
+NTPClient timeClientEth (ntpUDP_Eth,  "id.pool.ntp.org", 7 * 3600);
+
+unsigned long lastEpoch       = 0;
+unsigned long lastEpochMillis = 0;
+
+unsigned long lastNTPUpdate   = 0;
+#define NTP_INTERVAL_MS 30000
 
 // STATE NETWORK FLOW
 bool isConnected = false;
@@ -165,80 +171,84 @@ void checkConnection() {
   if (lanLinkON()) {
     isUsingLan  = true;
     isConnected = true;
-
     if (!prevLan) {
       Serial.println("[NET] LAN terdeteksi — switch ke LAN");
       WiFi.disconnect(true);
       timeClientEth.begin();
     }
-
   } else {
     if (prevLan) {
-      Serial.println("[NET] LAN no connection — switch to WiFi");
+      Serial.println("[NET] LAN putus — switch ke WiFi");
       isUsingLan = false;
       WiFi.begin(ssid, pass);
     }
-
     isConnected = (WiFi.status() == WL_CONNECTED);
-
     if (!prevConnected && isConnected) {
       timeClientWiFi.begin();
     }
   }
 
   if (prevConnected != isConnected || prevLan != isUsingLan) {
-
-    Serial.print  ("[NET] Mode     : ");
+    Serial.print("[NET] Mode   : ");
     Serial.println(isUsingLan ? "LAN (W5500)" : "WiFi");
-
-    Serial.print  ("[NET] Status   : ");
+    Serial.print("[NET] Status : ");
     Serial.println(isConnected ? "CONNECTED" : "DISCONNECTED");
-
     if (isConnected) {
-      Serial.print("[NET] IP       : "); Serial.println(getIpString());
-      Serial.print("[NET] MAC      : "); Serial.println(getMacString());
+      Serial.print("[NET] IP  : "); Serial.println(getIpString());
+      Serial.print("[NET] MAC : "); Serial.println(getMacString());
     } else {
-      Serial.println("[NET] Data Time/Date fallback to RTC");
+      Serial.println("[NET] Fallback ke RTC / epoch lokal");
     }
   }
 }
 
 void updateTime() {
-  bool gotInternetTime = false;
+  bool gotTime = false;
 
   if (isConnected) {
-    bool ntpOK = isUsingLan
-                 ? timeClientEth.update()
-                 : timeClientWiFi.update();
+    bool doForce = (lastNTPUpdate == 0) ||
+                   (millis() - lastNTPUpdate >= NTP_INTERVAL_MS);
 
-    Serial.print("[NTP] source   : ");
-    Serial.print(isUsingLan ? "LAN" : "WiFi");
-    Serial.print(" — ");
-    Serial.println(ntpOK ? "OK" : "Failed");
+    if (doForce) {
+      bool ntpOK = isUsingLan
+                   ? timeClientEth.forceUpdate()
+                   : timeClientWiFi.forceUpdate();
 
-    if (ntpOK) {
-      NTPClient& active = isUsingLan ? timeClientEth : timeClientWiFi;
+      Serial.print("[NTP] forceUpdate : ");
+      Serial.print(isUsingLan ? "LAN" : "WiFi");
+      Serial.print(" — ");
+      Serial.println(ntpOK ? "OK" : "Failed");
 
-      h = active.getHours();
-      m = active.getMinutes();
+      if (ntpOK) {
+        NTPClient& active = isUsingLan ? timeClientEth : timeClientWiFi;
+        lastEpoch         = active.getEpochTime();
+        lastEpochMillis   = millis();
+        lastNTPUpdate     = millis();
 
-      time_t epochTime = active.getEpochTime();
-      struct tm *ptm   = gmtime(&epochTime);
+        if (rtcAvailable) {
+          time_t e       = lastEpoch;
+          struct tm *ptm = gmtime(&e);
+          rtc.adjust(DateTime(ptm->tm_year + 1900, ptm->tm_mon + 1,
+                              ptm->tm_mday, ptm->tm_hour,
+                              ptm->tm_min,  ptm->tm_sec));
+          Serial.println("[RTC] Sync from NTP");
+        }
+      }
+    }
+
+    if (lastEpoch > 0) {
+      time_t now     = lastEpoch + (millis() - lastEpochMillis) / 1000;
+      struct tm *ptm = gmtime(&now);
+      h     = ptm->tm_hour;
+      m     = ptm->tm_min;
       d     = ptm->tm_mday;
       month = ptm->tm_mon;
       yr    = ptm->tm_year + 1900;
-
-      gotInternetTime = true;
-
-      if (rtcAvailable) {
-        rtc.adjust(DateTime(yr, month + 1, d, h, m, 0));
-        Serial.println("[RTC] Sync from NTP");
-      }
+      gotTime = true;
     }
   }
 
-  // fallback RTC
-  if (!gotInternetTime) {
+  if (!gotTime) {
     if (rtcAvailable) {
       DateTime now = rtc.now();
       h     = now.hour();
@@ -246,9 +256,10 @@ void updateTime() {
       d     = now.day();
       month = now.month() - 1;
       yr    = now.year();
-      Serial.println("[RTC] Using Backup RTC");
+      gotTime = true;
+      Serial.println("[RTC] Using backup RTC");
     } else {
-      Serial.println("[TIME] WARNING — No Connection for source Actual Time/Date");
+      Serial.println("[TIME] WARNING — Tidak ada sumber waktu");
     }
   }
 
@@ -392,7 +403,6 @@ void printWifiLog() {
   Serial.print  ("[WIFI] Gateway : "); Serial.println(WiFi.gatewayIP());
   Serial.print  ("[WIFI] DNS     : "); Serial.println(WiFi.dnsIP());
 }
-
 
 void setup() {
   Serial.begin(115200);
