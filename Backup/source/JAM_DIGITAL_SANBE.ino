@@ -1,7 +1,6 @@
 // ====================
 // JAM_DIGITAL_SANBE_DEV.5.3
-// otw final all flow(flash terakhir 23/05/2026)
-// add trace mapping lan re map miso 
+// backup source
 // author : obets
 // project : jam digital panel p5 pt sanbe 
 // ====================
@@ -27,13 +26,14 @@
 // W5500 SPI PIN 
 #define W5500_SCK  32
 #define W5500_MISO 35 
+// #define W5500_MISO 33
 #define W5500_MOSI 25
 #define W5500_CS   23
 
 
 // WIFI CONNECTION CONFIG 
-char ssid[] = "Obet's";
-char pass[] = "obets1234";
+char ssid[] = "ALKAALDE";
+char pass[] = "Alkaalde111";
 
 //LAN CONNECTION CONFIG 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -463,6 +463,11 @@ void setup() {
   } else {
     Serial.println("[RTC] DS1307 NOT DETECTED");
   }
+
+  // SPI.begin(W5500_SCK, W5500_MISO, W5500_MOSI, W5500_CS);
+  // Ethernet.init(W5500_CS);
+  // SPI.setFrequency(8000000);
+  // printLanLog();
 
   SPI.begin(W5500_SCK, W5500_MISO, W5500_MOSI, W5500_CS);
 

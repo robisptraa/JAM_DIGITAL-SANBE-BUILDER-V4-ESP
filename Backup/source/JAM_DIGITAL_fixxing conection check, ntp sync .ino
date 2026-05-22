@@ -1,7 +1,6 @@
 // ====================
 // JAM_DIGITAL_SANBE_DEV.5.3
-// otw final all flow(flash terakhir 23/05/2026)
-// add trace mapping lan re map miso 
+// test test
 // author : obets
 // project : jam digital panel p5 pt sanbe 
 // ====================
@@ -18,7 +17,6 @@
 #include <Wire.h>
 #include <RTClib.h>
 
-
 // P5 CONFIG 
 #define PANEL_RES_X 64
 #define PANEL_RES_Y 32
@@ -26,14 +24,13 @@
 
 // W5500 SPI PIN 
 #define W5500_SCK  32
-#define W5500_MISO 35 
+#define W5500_MISO 33
 #define W5500_MOSI 25
 #define W5500_CS   23
 
-
 // WIFI CONNECTION CONFIG 
-char ssid[] = "Obet's";
-char pass[] = "obets1234";
+char ssid[] = "ALKAALDE";
+char pass[] = "Alkaalde111";
 
 //LAN CONNECTION CONFIG 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -465,32 +462,8 @@ void setup() {
   }
 
   SPI.begin(W5500_SCK, W5500_MISO, W5500_MOSI, W5500_CS);
-
-pinMode(W5500_CS, OUTPUT);
-digitalWrite(W5500_CS, HIGH);
-delay(100);
-
-SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
-digitalWrite(W5500_CS, LOW);
-SPI.transfer(0x00);
-SPI.transfer(0x39);
-SPI.transfer(0x00);
-uint8_t ver = SPI.transfer(0x00);
-digitalWrite(W5500_CS, HIGH);
-SPI.endTransaction();
-
-Serial.print("[W5500] Version Register : 0x");
-Serial.println(ver, HEX);
-if (ver == 0x04) {
-  Serial.println("[W5500] Chip TERDETEKSI ✓");
-} else {
-  Serial.println("[W5500] Chip TIDAK TERDETEKSI — cek wiring/pin");
-}
-
-
-Ethernet.init(W5500_CS);
-SPI.setFrequency(8000000);
-printLanLog();
+  Ethernet.init(W5500_CS);
+  printLanLog();
 
   if (isUsingLan) {
     timeClientEth.begin();
