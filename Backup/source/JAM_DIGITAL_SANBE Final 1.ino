@@ -1,7 +1,7 @@
 // ====================
-// JAM_DIGITAL_SANBE_DEV.5.5
-// last [flash]-stable
-// add trace mapping lan re map miso (fixxing) : RTC /lan | FIxxing 
+// JAM_DIGITAL_SANBE_DEV.5.3
+// otw final all flow(flash terakhir 23/05/2026)
+// add trace mapping lan re map miso 
 // author : obets
 // project : jam digital panel p5 pt sanbe 
 // ====================
@@ -102,13 +102,16 @@ void showSplash() {
   const int charW = 6;
   const int charH = 8;
 
+  // Hitung lebar text
   int textW1 = strlen(line1) * charW;
   int textW2 = strlen(line2) * charW;
 
+  // Posisi tengah horizontal
   int x1 = (PANEL_RES_X - textW1) / 2;
   int x2 = (PANEL_RES_X - textW2) / 2;
 
-  int totalH = (charH * 2) + 2; 
+  // Posisi vertikal 2 layer
+  int totalH = (charH * 2) + 2; // 2 baris + jarak
   int startY = (PANEL_RES_Y - totalH) / 2;
 
   int y1 = startY;
@@ -187,61 +190,38 @@ void displayLayout() {
 }
 
 void checkConnection() {
-
   bool prevConnected = isConnected;
   bool prevLan       = isUsingLan;
 
   if (lanLinkON()) {
-    if (!prevLan) {
-
-      Serial.println("[NET] LAN terdeteksi — switch ke LAN");
-
-      Ethernet.begin(mac);
-
-      WiFi.disconnect(true);
-
-      timeClientEth.begin();
-    }
-
     isUsingLan  = true;
     isConnected = true;
-
+    if (!prevLan) {
+      Serial.println("[NET] LAN terdeteksi — switch ke LAN");
+      WiFi.disconnect(true);
+      timeClientEth.begin();
+    }
   } else {
-
     if (prevLan) {
-
       Serial.println("[NET] LAN putus — switch ke WiFi");
-
       isUsingLan = false;
-
       WiFi.begin(ssid, pass);
     }
-
     isConnected = (WiFi.status() == WL_CONNECTED);
-
     if (!prevConnected && isConnected) {
       timeClientWiFi.begin();
     }
   }
 
   if (prevConnected != isConnected || prevLan != isUsingLan) {
-
     Serial.print("[NET] Mode   : ");
     Serial.println(isUsingLan ? "LAN (W5500)" : "WiFi");
-
     Serial.print("[NET] Status : ");
     Serial.println(isConnected ? "CONNECTED" : "DISCONNECTED");
-
     if (isConnected) {
-
-      Serial.print("[NET] IP  : ");
-      Serial.println(getIpString());
-
-      Serial.print("[NET] MAC : ");
-      Serial.println(getMacString());
-
+      Serial.print("[NET] IP  : "); Serial.println(getIpString());
+      Serial.print("[NET] MAC : "); Serial.println(getMacString());
     } else {
-
       Serial.println("[NET] Fallback ke RTC / epoch lokal");
     }
   }
@@ -473,34 +453,16 @@ void setup() {
   printPanelLog();
 
   Wire.begin(21, 22);
-if (rtc.begin()) {
-  rtcAvailable = true;
-  Serial.println("[RTC] DS1307 READY");
-
-  if (!rtc.isrunning()) {
-    Serial.println("[RTC] LOST POWER — set compile time");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  if (rtc.begin()) {
+    rtcAvailable = true;
+    Serial.println("[RTC] DS1307 READY");
+    if (!rtc.isrunning()) {
+      Serial.println("[RTC] LOST POWER — set compile time");
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    }
+  } else {
+    Serial.println("[RTC] DS1307 NOT DETECTED");
   }
-
-  DateTime now = rtc.now();
-
-  h     = now.hour();
-  m     = now.minute();
-  d     = now.day();
-  month = now.month() - 1;
-  yr    = now.year();
-
-  Serial.println("[RTC] Initial RTC preload");
-  Serial.printf("[TIME] %02d:%02d | %02d/%02d/%04d\n",
-                h, m, d, month + 1, yr);
-
-  displayLayout(); 
-}
-else {
-  Serial.println("[RTC] DS1307 NOT DETECTED");
-}
-
-
 
   SPI.begin(W5500_SCK, W5500_MISO, W5500_MOSI, W5500_CS);
 
